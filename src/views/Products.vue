@@ -2,9 +2,9 @@
   <div>
     <button @click="dsa">asdas</button>
     <h1>Products</h1>
-    <input type="text" v-model="searchString" @input="pushQueryToUrl({search: searchString})" />
+    <input type="text" v-model="searchString" @input="pushQueryToUrl({ search: searchString })" />
     <div v-for="c in categories.data" :key="c.id">
-      <button @click="pushQueryToUrl({categoryId: c.id})">{{ c.title }}</button>
+      <button @click="pushQueryToUrl({ categoryId: c.id })">{{ c.title }}</button>
     </div>
     <select name="sort" v-model="sort" @change="asd($event)">
       <option value="updatedAt:desc">Newest</option>
@@ -17,11 +17,14 @@
       <p>{{ p.spec }}</p>
     </div>
     <div v-for="i in products?.meta?.pagination?.pageCount" :key="i">
-      <button @click="pushQueryToUrl({page: i})">{{ i }}</button>
+      <button @click="pushQueryToUrl({ page: i })">{{ i }}</button>
     </div>
     <div>
-       <input type="checkbox"   value='wifi:5' @change="pushQueryToUrl({spec: $event.target.value})">
-       <input type="checkbox"   value='let:true' @change="pushQueryToUrl({spec: $event.target.value})">
+      <input type="checkbox" value='wifi:5' @change="pushQueryToUrl({ spec: $event.target.value })">
+      <input type="checkbox" value='let:true' @change="pushQueryToUrl({ spec: $event.target.value })">
+      <input type="checkbox" value='lol:gol' @change="pushQueryToUrl({ spec: $event.target.value })">
+      <input type="checkbox" value='lol1:gol1' @change="pushQueryToUrl({ spec: $event.target.value })">
+      <input type="checkbox" value='lol2:gol2' @change="pushQueryToUrl({ spec: $event.target.value })">
 
     </div>
   </div>
@@ -49,16 +52,42 @@ export default {
     }
     function pushQueryToUrl(queryParam) {
       Object.entries(queryParam).forEach(([key, value]) => {
+
         if (value) {
-          ezQuery[key] = value;
- 
-        }else{
+          if (key == "spec") {
+            if (ezQuery[key] == undefined) {
+              ezQuery[key] = value
+              console.log(1)
+              console.log('ezQK',ezQuery[key])
+                  console.log('eqq1', ezQuery)
+            } else {  
+              console.log(11123, ezQuery[key])
+              // console.log('lol',ezQuery[key].map(s => s.join(':')+ ',' + value))
+              // ezQuery[key] = ezQuery[key]+ ',' + value;
+              ezQuery[key] = ezQuery[key].map(s => s.join(':')) + ',' + value;
+              
+              // ezQuery[key] = queryParam.spec
+              console.log(2)
+              console.log( 'value',value)
+              console.log('ezQuery', ezQuery)
+              console.log('ezQK2',ezQuery[key])
+            }
+
+
+          } else {
+            ezQuery[key] = value;
+          }
+        }
+        else {
           ezQuery[key] = undefined;
         }
       });
-      router.push({query: ezQuery})
+      console.log('qparam', queryParam)
+
+      router.push({ query: ezQuery })
     }
     async function createProductQuery() {
+      console.log('nado',ezQuery.spec)
       ezQuery = {
         page: route.query.page,
         gte: route.query.gte,
@@ -68,38 +97,41 @@ export default {
         spec: route.query.spec ? route.query.spec.split(',').map(s => s.split(':')) : undefined,
         search: route.query.search != '' || route.query.search ? route.query.search : undefined
       }
-      console.log(ezQuery.spec)
-      const pagination = {page: route.query.page || 1, pageSize: 5};
+      console.log('ezQ.spec',ezQuery.spec) 
+      // console.log(ezQuery.spec)
+      const pagination = { page: route.query.page || 1, pageSize: 5 };
       const populate = ["category"];
       const sort = route.query.sort ? [route.query.sort] : ["updatedAt:desc"];
       const search = route.query.search != '' && route.query.search ? route.query.search : undefined
       const spec = route.query.spec
+      console.log(spec)
+
       const filters = {
-          $and: [
-            {
-              price: {
-                $gte: route.query.price_gte,
-              },
+        $and: [
+          {
+            price: {
+              $gte: route.query.price_gte,
             },
-            {
-              price: {
-                $lte: route.query.price_lte,
-              },
+          },
+          {
+            price: {
+              $lte: route.query.price_lte,
             },
-            {
-              category:{
-                id: {
-                  $eq: route.query.categoryId || categories[0]?.id,
-                }
+          },
+          {
+            category: {
+              id: {
+                $eq: route.query.categoryId || categories[0]?.id,
               }
-            },
-            {
-              title: {
-                $startsWith: search,
-              }
-            },
-          ],
-        };
+            }
+          },
+          {
+            title: {
+              $startsWith: search,
+            }
+          },
+        ],
+      };
       if (ezQuery.spec) {
         ezQuery.spec.map(s => {
           filters.$and.push({
@@ -109,8 +141,8 @@ export default {
           })
         })
       }
-     
-      
+
+
       const query = {
         populate,
         pagination,
@@ -121,10 +153,10 @@ export default {
       await eCommerceStore.fetchProducts(query);
       console.log(filters);
     }
-    watchEffect(() => {      
+    watchEffect(() => {
       createProductQuery();
     });
-    onMounted(() => {});    
+    onMounted(() => { });
     return {
       products,
       eCommerceStore,
